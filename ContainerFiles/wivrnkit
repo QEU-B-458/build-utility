@@ -12,4 +12,4 @@ COPY ../packages/wivrnkit.packages /
 
 # Run the setup scripts
 RUN chmod +x wivrnkit.sh distrobox-shims.sh && /wivrnkit.sh
-RUN rm /wivrnkit.sh /distrobox-shims.sh /wivrn.packages
+RUN rm /wivrnkit.sh /distrobox-shims.sh /wivrnkit.packages
