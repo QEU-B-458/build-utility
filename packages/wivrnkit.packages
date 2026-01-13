@@ -31,3 +31,9 @@ shaderc
 systemd-libs
 vulkan-icd-loader
 x264
+
+fuse2
+squashfs-tools
+wget
+tar
+gzip
