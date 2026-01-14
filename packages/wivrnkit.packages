@@ -46,7 +46,6 @@ gst-plugins-base
 gst-plugins-good
 libglvnd
 wayland-protocols
-librealsense
 cjson
 onnxruntime
 libuvc
@@ -59,3 +58,11 @@ make
 pkgconfig
 tar
 gzip
+python 
+python-pip
+python-setuptools
+python-wheel
+librealsense
+ultraleap-hand-tracking-service
+openhmd-git
+openvr-git
