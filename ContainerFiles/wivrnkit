@@ -1,4 +1,5 @@
 FROM docker.io/ticpu/archlinux-paru:latest
+FROM docker.io/ticpu/archlinux-paru:latest
 
 LABEL com.github.containers.toolbox="true" \
       usage="This image is meant to be used with the toolbox or distrobox command" \
@@ -7,11 +8,35 @@ LABEL com.github.containers.toolbox="true" \
 
 WORKDIR /
 
-# Copy the setup scripts and package list
-COPY ../scripts/wivrnkit.sh /
-COPY ../scripts/distrobox-shims.sh /
-COPY ../packages/wivrnkit.packages /
+# Copy required files
+COPY ../scripts/distrobox-shims.sh /distrobox-shims.sh
+COPY ../packages/wivrnkit.packages /wivrnkit.packages
 
-# Run the setup scripts
-RUN sudo chmod +x wivrnkit.sh distrobox-shims.sh && /wivrnkit.sh
-RUN sudo rm /wivrnkit.sh /distrobox-shims.sh /wivrnkit.packages
+# --- NON-ROOT: distrobox shims ---
+RUN chmod +x /distrobox-shims.sh && /distrobox-shims.sh
+
+# --- ROOT: system packages ---
+USER root
+RUN pacman -Syu --noconfirm --needed \
+    base-devel \
+    wget
+
+# --- NON-ROOT: project deps via paru (repo + AUR) ---
+USER 1000
+RUN grep -v '^#' /wivrnkit.packages | \
+    xargs paru -S --noconfirm --needed
+
+# --- ROOT: AppImage tools ---
+USER root
+RUN wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+        -O /usr/local/bin/appimagetool && \
+    chmod +x /usr/local/bin/appimagetool && \
+    wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
+        -O /usr/local/bin/linuxdeploy && \
+    chmod +x /usr/local/bin/linuxdeploy
+
+# --- Cleanup ---
+RUN rm -f /distrobox-shims.sh /wivrnkit.packages
+
+# --- Back to toolbox default user ---
+USER 1000
