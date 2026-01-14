@@ -47,7 +47,6 @@ gst-plugins-good
 libglvnd
 wayland-protocols
 librealsense
-python-depthai
 cjson
 onnxruntime
 percetto
