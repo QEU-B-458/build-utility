@@ -8,15 +8,15 @@ LABEL com.github.containers.toolbox="true" \
 
 WORKDIR /
 
+USER root
 # Copy required files
 COPY ../scripts/distrobox-shims.sh /distrobox-shims.sh
 COPY ../packages/wivrnkit.packages /wivrnkit.packages
 
-# --- NON-ROOT: distrobox shims ---
+# --- ROOT: distrobox shims ---
 RUN chmod +x /distrobox-shims.sh && /distrobox-shims.sh
 
 # --- ROOT: system packages ---
-USER root
 RUN pacman -Syu --noconfirm --needed \
     base-devel \
     wget
