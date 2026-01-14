@@ -62,7 +62,6 @@ python
 python-pip
 python-setuptools
 python-wheel
-python-depthai
 librealsense
 ultraleap-hand-tracking-service
 openhmd-git
