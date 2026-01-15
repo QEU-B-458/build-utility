@@ -35,8 +35,8 @@ jobs:
           images: |
             ${{ matrix.containerfile }}
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/ublue-os/boxkit/main/README.md
-            org.opencontainers.image.description=Arch Linux toolbox image for wivrnkit with RealSense and Ultraleap overlays
+            io.artifacthub.package.readme-url="https://raw.githubusercontent.com/ublue-os/boxkit/main/README.md"
+            org.opencontainers.image.description="Arch Linux toolbox image for wivrnkit with RealSense and Ultraleap overlays"
             
       - name: Build Image
         id: build_image
