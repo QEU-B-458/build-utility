@@ -5,62 +5,55 @@ LABEL com.github.containers.toolbox="true" \
       summary="A cloud-native terminal experience" \
       maintainer="jorge.castro@gmail.com"
 
-RUN pacman-key --init
+# --- ROOT: initialize keyring and install essential packages ---
+RUN pacman-key --init && \
+    pacman -Syu --noconfirm --needed base-devel git wget sudo
 
-RUN pacman -Syyu --noconfirm base-devel git 
-
+# --- ROOT: create build user ---
 RUN useradd -m build_user && \
     passwd -d build_user && \
-    printf 'docker_user ALL=(ALL) ALL\n' | tee -a /etc/sudoers
+    printf 'build_user ALL=(ALL) NOPASSWD: ALL\n' >> /etc/sudoers
 
-USER root
-
-RUN mkdir /AUR && chown build_user:build_user /AUR
-
+# --- NON-ROOT: setup AUR helper (paru) ---
 USER build_user
+WORKDIR /home/build_user/AUR
 
-WORKDIR /AUR
+RUN git clone https://aur.archlinux.org/paru.git && \
+    cd paru && \
+    makepkg -si --noconfirm --needed
 
-RUN git clone https://aur.archlinux.org/paru.git
-
-WORKDIR /AUR/paru
-
-RUN makepkg -si --noconfirm
-
+# --- ROOT: copy scripts and packages ---
 USER root
+WORKDIR / 
 
-WORKDIR /
-
-
-
-# Copy required files
 COPY ../scripts/distrobox-shims.sh /distrobox-shims.sh
 COPY ../packages/wivrnkit.packages /wivrnkit.packages
 
-# --- ROOT: distrobox shims ---
-RUN chmod +x /distrobox-shims.sh && /distrobox-shims.sh
+# --- ROOT: setup distrobox shims and system packages ---
+RUN chmod +x /distrobox-shims.sh && /distrobox-shims.sh && \
+    pacman -Syu --noconfirm --needed base-devel wget
 
-# --- ROOT: system packages ---
-RUN pacman -Syu --noconfirm --needed \
-    base-devel \
-    wget
+# --- NON-ROOT: install project dependencies via paru ---
+USER build_user
+RUN grep -v '^#' /wivrnkit.packages | xargs -r -n1 paru -S --noconfirm --needed
 
-# --- NON-ROOT: project deps via paru (repo + AUR) ---
-USER 1000
-RUN grep -v '^#' /wivrnkit.packages | \
-    xargs paru -S --noconfirm --needed
-
-# --- ROOT: AppImage tools ---
+# --- ROOT: install AppImage tools ---
 USER root
-RUN wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+RUN wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
         -O /usr/local/bin/appimagetool && \
     chmod +x /usr/local/bin/appimagetool && \
-    wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
+    wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
         -O /usr/local/bin/linuxdeploy && \
     chmod +x /usr/local/bin/linuxdeploy
 
-# --- Cleanup ---
+# --- ROOT: cleanup temporary files ---
 RUN rm -f /distrobox-shims.sh /wivrnkit.packages
 
-# --- Back to toolbox default user ---
-USER 1000
+# --- ROOT: delete build user and home directory ---
+RUN userdel -r build_user || true
+RUN pacman -Scc --noconfirm
+
+# --- ROOT: final working directory ---
+WORKDIR /
+
+
